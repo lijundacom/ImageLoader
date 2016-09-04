@@ -8,13 +8,15 @@ import java.io.FileDescriptor;
 
 /**
  * Created by ljd-pc on 2016/9/4.
+ * 优化BitMap加载
+ * 使用采样率，减小bitMap对内存的占用。
  */
 public class ImageResizer {
     private static final String TAG = "ImageResizer";
     public ImageResizer(){
 
     }
-    //以采样率的方式加载图片
+    //以采样率的方式从资源文件中加载图片
     public Bitmap decodeSampledBitmapFromResource(Resources res,
                                                   int resId, int reqWidth, int reqHeight){
         //first decode with inJustDecodeBounds = true to check demensions
@@ -30,7 +32,7 @@ public class ImageResizer {
         return BitmapFactory.decodeResource(res,resId,options);
     }
 
-    //从文件描述符加载图片
+    //以采样率的方式从文件描述符加载图片
     public Bitmap decodeSampleBitmapFromFileDescriptor(FileDescriptor fd,
                                                        int reqWidth, int reqHeight){
         //first decode with inJustDecodeBounds = true to check demensions
