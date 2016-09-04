@@ -125,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
             builder.show();
         }
     }
-
+    //获取运行时权限
     private void AskForPermission(){
         if (Build.VERSION.SDK_INT >= 23) {
             Log.v(TAG, "AskForPermission()");
@@ -152,7 +152,8 @@ public class MainActivity extends AppCompatActivity implements AbsListView.OnScr
         Log.v("PermissionsResult","onRequestPermissionsResult");
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
-
+    //当照片墙停止滑动时，才加载图片
+    //照片墙滑动时，不加载图片
     @Override
     public void onScrollStateChanged(AbsListView view, int scrollState) {
         if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE) {
