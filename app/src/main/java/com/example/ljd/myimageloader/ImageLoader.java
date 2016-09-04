@@ -73,13 +73,13 @@ public class ImageLoader {
             KEEP_ALIVE, TimeUnit.SECONDS,
             new LinkedBlockingDeque<Runnable>(),sThreadFactory
     );
-
+    //子线程下载图片，主线程从消息队列中取出图片并更新UI
     private Handler mMainHandler = new Handler(Looper.getMainLooper()){
         @Override
         public void handleMessage(Message msg) {
             LoaderResult result = (LoaderResult)msg.obj;
             ImageView imageView = result.imageView;
-            imageView.setImageBitmap(result.bitmap);
+            //imageView.setImageBitmap(result.bitmap);
             String uri = (String) imageView.getTag(TAG_KEY_URI);
             if(uri.equals(result.uri)){
                 imageView.setImageBitmap(result.bitmap);
@@ -139,12 +139,14 @@ public class ImageLoader {
 
     public void bindBitmap(final String uri,final ImageView imageView,
                            final int reqWidth, final int reqHeight){
-        imageView.setTag(TAG_KEY_URI,uri);//将uri存入imageView
+        imageView.setTag(TAG_KEY_URI,uri);//将uri存入当前imageView
+        //如果内存缓存中有图片，直接在主线程中加载
         Bitmap bitmap = loadBitmapFromMemCache(uri);
         if(bitmap != null){
             imageView.setImageBitmap(bitmap);
             return;
         }
+        //如果内存缓存中没有图片，异步加载
         final Runnable loadBitmapTask = new Runnable() {
             @Override
             public void run() {
@@ -172,6 +174,7 @@ public class ImageLoader {
                 Log.d(TAG,"loadBitmapFromDisk,url:"+uri);
                 return bitmap;
             }
+            //如果硬盘缓存创建了，下载先存入赢盘缓存，再从硬盘缓存中获取
             bitmap = loadBitmapFromHttp(uri,reqWidth,reqHeight);
             Log.d(TAG,"loadBitmapFromHttp,url:"+uri);
         }catch (IOException e){
@@ -180,17 +183,18 @@ public class ImageLoader {
 
         if(bitmap==null && !mIsDiskLruCacheCreated){
             Log.w(TAG,"ERROR:DiskLruCache is not created");
+            //如果硬盘缓存没有创建，直接下载，并保存为bitmap
             bitmap = downloadBitmapFromUrl(uri);
         }
         return bitmap;
     }
-
+    //从内存缓存获取
     private Bitmap loadBitmapFromMemCache(String url){
         final String key = hashKeyFromUrl(url);
         Bitmap bitmap = getBitmapFormeMemCache(key);
         return bitmap;
     }
-
+    //每次下载后，图片都会先存储到磁盘缓存中，并从磁盘缓存获取
     private Bitmap loadBitmapFromHttp(String url,int reqWidth,
                                       int reqHeight) throws IOException{
         if(Looper.myLooper() == Looper.getMainLooper()){
@@ -213,7 +217,7 @@ public class ImageLoader {
         }
         return loadBitmapFromDiskCache(url,reqWidth,reqHeight);
     }
-
+    //每次从磁盘缓存获取一张图片，图片都会存入内存缓存
     private Bitmap loadBitmapFromDiskCache(String url,int reqWidth,int reqHeight)
             throws IOException{
         if(Looper.myLooper() == Looper.getMainLooper()){
@@ -238,7 +242,7 @@ public class ImageLoader {
         }
         return bitmap;
     }
-
+    //下载的图片转化成outputStream，目的是存入硬盘缓存
     public boolean downloadUrlToStream(String urlString,
                                        OutputStream outputStream){
         HttpURLConnection urlConnection = null;
@@ -266,7 +270,7 @@ public class ImageLoader {
         }
         return false;
     }
-
+    //下载的图片直接输出为BitMap
     private Bitmap downloadBitmapFromUrl(String urlString){
         Bitmap bitmap = null;
         HttpURLConnection urlConnection = null;
